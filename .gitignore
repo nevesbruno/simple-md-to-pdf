@@ -1,0 +1,29 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.env/
+.venv/
+venv/
+ENV/
+
+# Editor/IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# PDF outputs
+*.pdf
+
+# Relatórios/documents
+/docs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
