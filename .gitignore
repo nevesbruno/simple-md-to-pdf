@@ -18,8 +18,9 @@ ENV/
 # PDF outputs
 *.pdf
 
-# Relatórios/documents
+# Relatorios/documents
 /docs/
+reports/
 
 # OS files
 .DS_Store
