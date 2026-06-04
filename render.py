@@ -1,5 +1,9 @@
+__version__ = "0.1.0"
+__version_info__ = (0, 1, 0)
+
 import sys
 from pathlib import Path
+
 from markdown import markdown
 from weasyprint import HTML
 
@@ -159,14 +163,45 @@ hr {
 </style>
 """
 
-MARKDOWN_EXTENSIONS = ['tables', 'fenced_code', 'codehilite', 'nl2br', 'sane_lists']
+MARKDOWN_EXTENSIONS = ["tables", "fenced_code", "codehilite", "nl2br", "sane_lists"]
 
 
-def convert_md_to_pdf(md_path: str, pdf_path: str):
-    if not Path(md_path).is_file():
-        raise FileNotFoundError(f'Arquivo não encontrado: {md_path}')
-    with open(md_path, encoding='utf-8') as f:
-        html_content = markdown(f.read(), extensions=MARKDOWN_EXTENSIONS)
+def log(prefix: str, msg: str):
+    print(f"[{prefix}] {msg}")
+
+
+def convert_md_to_pdf(md_path: str, pdf_path: str, verbose: bool = True):
+    md_file = Path(md_path)
+    pdf_file = Path(pdf_path)
+
+    if verbose:
+        log("*", "Iniciando conversao MD -> PDF")
+        log("*", f"Arquivo de entrada: {md_file.resolve()}")
+        log("*", f"Arquivo de saida:   {pdf_file.resolve()}")
+
+    if not md_file.is_file():
+        log("!", f"ERRO: Arquivo nao encontrado: {md_path}")
+        raise FileNotFoundError(f"Arquivo nao encontrado: {md_path}")
+
+    if verbose:
+        log("+", "Lendo arquivo Markdown...")
+        file_size = md_file.stat().st_size
+        log("*", f"Tamanho do arquivo: {file_size} bytes")
+
+    with open(md_file, encoding="utf-8") as f:
+        md_content = f.read()
+
+    if verbose:
+        line_count = len(md_content.splitlines())
+        log("*", f"Linhas no documento: {line_count}")
+        log("+", "Convertendo Markdown para HTML...")
+        log("*", f"Extensoes ativas: {', '.join(MARKDOWN_EXTENSIONS)}")
+
+    html_content = markdown(md_content, extensions=MARKDOWN_EXTENSIONS)
+
+    if verbose:
+        log("+", "Aplicando estilos CSS...")
+
     html_with_font = f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -177,11 +212,39 @@ def convert_md_to_pdf(md_path: str, pdf_path: str):
 {html_content}
 </body>
 </html>"""
-    HTML(string=html_with_font, base_url=Path(md_path).parent.as_posix()).write_pdf(pdf_path)
+
+    if verbose:
+        log("+", "Gerando PDF com WeasyPrint...")
+        log("*", f"Base URL: {md_file.parent.as_posix()}")
+
+    HTML(string=html_with_font, base_url=md_file.parent.as_posix()).write_pdf(pdf_path)
+
+    if verbose:
+        pdf_size = pdf_file.stat().st_size
+        log("+", "PDF gerado com sucesso")
+        log("*", f"Tamanho do PDF: {pdf_size} bytes")
+        log("-", "Conversao finalizada")
+
 
 if __name__ == "__main__":
+    print("=" * 50)
+    print("  RENDER.PY - Markdown to PDF Converter")
+    print("=" * 50)
+
     if len(sys.argv) != 3:
-        print("Uso: python render.py caminho/entrada.md caminho/saida.pdf")
+        log("!", "Argumentos invalidos")
+        print("\nUso: python render.py <entrada.md> <saida.pdf>")
+        print("\nExemplo:")
+        print("  python render.py documento.md documento.pdf")
         sys.exit(1)
+
     md_file, pdf_file = sys.argv[1], sys.argv[2]
-    convert_md_to_pdf(md_file, pdf_file)
+
+    try:
+        convert_md_to_pdf(md_file, pdf_file)
+        print("=" * 50)
+    except FileNotFoundError:
+        sys.exit(1)
+    except Exception as e:
+        log("!", f"Erro inesperado: {e}")
+        sys.exit(1)
